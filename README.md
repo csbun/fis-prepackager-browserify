@@ -1,4 +1,4 @@
-# scrat-preprocessor-i18n
+# scrat-postprocessor-browserify
 
 A browserify postprocessor for [fis](http://fex-team.github.io/fis-site/) / [Scrat](http://scrat.io) with default transforms:
 
