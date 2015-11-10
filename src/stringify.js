@@ -30,9 +30,11 @@ module.exports = function (extensions, htmlMinifierOptions, fisRet) {
 
         var onwrite = function () {};
         var onend = function () {
-            // if (fis.util.isFile(inputFileRealPath)) {
-            var retSrc = '/' + path.relative(PROJECT_DIR, inputFileRealPath);
-            var content = fisRet.src[retSrc].getContent();
+            var retSrc = '/' + path.relative(PROJECT_DIR, inputFileRealPath).replace(/\\/g, '/');
+            var contentFile = fisRet.src[retSrc];
+            var content = contentFile ?
+                contentFile.getContent() :
+                '<div style="color:red">file `' + retSrc + '` NOT found!</div>';
             this.queue(content2string(minify(content, htmlMinifierOptions || {})));
             this.queue(null);
         };
