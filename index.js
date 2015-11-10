@@ -1,74 +1,27 @@
 'use strict';
 
-var path = require('path');
-var through = require('through');
-var deasync = require('deasync');
-var browserify = require('browserify');
-var stringify = require('stringify');
-var debowerify = require('debowerify');
+var packLayoutHtml = require('./src/pack-layout-html');
+var browserify = require('./src/browserify');
 
-module.exports = function (content, file, conf) {
-    if (file.isLayout && file.isJsLike) {
-        var isDone = false;
-        // do browserify
-        browserify(file.realpath, conf.opts || {})
-        .transform(stringify(['.tpl', '.html'])) // 支持 require(tpl/html)
-        .transform(debowerify) // 支持 bower
-        .transform(urify) // 支持 fis 的 __uri() 资源定位
-        .on('file', function (depFilePath) {
-            // find dependences
-            if (depFilePath !== file.realpath) {
-                file.cache.addDeps(depFilePath);
+module.exports = function (ret, conf, settings, opt) {
+    fis.util.map(ret.src, function (subpath, file) {
+        // 只处理入口文件
+        if (file.isLayout) {
+            if (file.isHtmlLike) {
+                // 处理入口 html
+                packLayoutHtml(file, ret, settings, opt);
+            } else if (file.isJsLike) {
+                // 处理入口 js
+                browserify(file, ret, settings, opt);
             }
-        })
-        .bundle(function (err, buff) {
-            if (err) {
-                content = 'console.error(' + JSON.stringify(err.message) + ');' +
-                          'console.error(' + JSON.stringify(err) + ');';
-            } else {
-                content = buff.toString();
+        }
+
+        // 如果 -p 打包且指定了 packRelease，则替换 release 路径
+        if (opt.pack && file.hasOwnProperty('packRelease')) {
+            file.release = file.packRelease;
+            if (typeof file.release === 'string') {
+                file.release = file.release.replace(/\.(less|scss|sass)$/, '.css');
             }
-            isDone = true;
-        });
-        // 使用 deasync 让 browserify 同步输出到 content
-        deasync.loopWhile(function (){
-            return !isDone;
-        });
-    }
-    return content;
+        }
+    });
 };
-
-
-var fisCompileSettings = (fis.compile || '').settings || {};
-var URI_REG = /\b__uri\(\s*('|")([^'"]+)\1\s*\)/g;
-/**
- * Browserify transform
- * change `__uri('xxx')` to real path
- * @param  {string} file [description]
- */
-function urify(inputFileRealPath) {
-    var chunks = [];
-
-    var onwrite = function (buffer) {
-      chunks.push(buffer);
-    };
-
-    var onend = function () {
-        var contents = Buffer.concat(chunks)
-            .toString('utf8')
-            .replace(URI_REG, function (match, quotmark, depFileName) {
-                var depFile = fis.uri(depFileName, path.dirname(inputFileRealPath));
-                if (depFile && depFile.file) {
-                    var url = depFile.file.getUrl(fisCompileSettings.hash, fisCompileSettings.domain);
-                    return quotmark + url + quotmark;
-                } else {
-                    console.error('\n' + depFileName + ' NOT found from ' + inputFileRealPath);
-                    return match;
-                }
-            });
-      this.queue(contents);
-      this.queue(null);
-    };
-
-    return through(onwrite, onend);
-}
