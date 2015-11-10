@@ -46,4 +46,6 @@ module.exports = function (file, fisRet, fisSettings, fisOpt) {
         }).code;
     }
     file.setContent(content);
+    // 文件更新到 release 目录
+    fisOpt.beforeCompile(file);    
 };
