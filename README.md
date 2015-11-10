@@ -2,7 +2,6 @@
 
 A browserify prepackager for [fis](http://fex-team.github.io/fis-site/) / [Scrat](http://scrat.io) with default transforms:
 
-- [stringify](https://www.npmjs.com/package/stringify)
 - [debowerify](https://www.npmjs.com/package/debowerify)
 
 ## Usage
