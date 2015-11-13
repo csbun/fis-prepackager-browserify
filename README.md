@@ -22,7 +22,7 @@ fis.config.set('settings.prepackager.browserify', {
         preserveLineBreaks: true
     }
 });
-fis.config.set('modules.prepackager.js', 'browserify');
+fis.config.set('modules.prepackager', 'browserify');
 fis.config.set('roadmap.path', [
     {
         // source js
